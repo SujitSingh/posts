@@ -1,16 +1,12 @@
 const express = require('express');
-const PORT = 8082;
+const cors = require('cors')
 const app = express();
+const PORT = 8082;
 
 const feetRoutes = require('./routes/feed');
 
-app.use((req, res, next)=> {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Control-Type, Authorization');
-  next();
-});
-
+app.use(cors());
+app.use(express.json());
 app.use('/feed', feetRoutes);
 
 app.listen(PORT, ()=> {
