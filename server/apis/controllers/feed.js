@@ -1,3 +1,5 @@
+const { validationResult } = require('express-validator/check')
+
 exports.getPosts = (req, res, next) => {
   res.send({
     posts: [
@@ -16,6 +18,13 @@ exports.getPosts = (req, res, next) => {
 }
 
 exports.createPost = (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.status(422).send({
+      error: error.array(),
+      message: 'Failed to create post due to data validation failure'
+    });
+  }
   const title = req.body.title;
   const content = req.body.content;
   res.send({
