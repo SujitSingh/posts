@@ -20,4 +20,16 @@ router.post('/post',
   feedCtrls.createPost
 );
 
+router.post('/post/:postId', 
+  [
+    body('title')
+      .trim()
+      .isLength({ min: 5 }),
+    body('content')
+      .trim()
+      .isLength({ min: 5 })
+  ],
+  feedCtrls.updatePost
+);
+
 module.exports = router;
