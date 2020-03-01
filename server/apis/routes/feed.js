@@ -20,7 +20,7 @@ router.post('/post',
   feedCtrls.createPost
 );
 
-router.post('/post/:postId', 
+router.put('/post/:postId', 
   [
     body('title')
       .trim()
@@ -31,5 +31,7 @@ router.post('/post/:postId',
   ],
   feedCtrls.updatePost
 );
+
+router.delete('/post/:postId', feedCtrls.deletePost);
 
 module.exports = router;

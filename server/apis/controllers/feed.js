@@ -92,6 +92,11 @@ exports.updatePost = (req, res, next) => {
   }
 
   Post.findById(postId).then(post => {
+    if (!post) {
+      const error = new Error('Post not available');
+      error.statusCode = 404;
+      throw error;
+    }
     if (post.imageUrl !== imagePath) {
       // new image path has been provided, delete previous
       filesUtil.deleteFile('public' + post.imageUrl);
@@ -107,4 +112,25 @@ exports.updatePost = (req, res, next) => {
     }).catch(error => {
       next(error);
     });
+}
+
+exports.deletePost = (req, res, next) => {
+  const postId = req.params.postId;
+  Post.findById(postId).then(post => {
+    if (!post) {
+      const error = new Error('Post not available');
+      error.statusCode = 404;
+      throw error;
+    }
+    // delete image
+    filesUtil.deleteFile('public', post.imageUrl);
+    // deleted post
+    return Post.findByIdAndRemove(postId);
+  }).then(deleted => {
+    res.send({
+      message: 'Post deleted'
+    });
+  }).catch(error => {
+    next(error);
+  });
 }
