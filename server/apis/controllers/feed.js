@@ -9,6 +9,22 @@ exports.getPosts = (req, res, next) => {
   });
 }
 
+exports.getPost = (req, res, next) => {
+  const postId = req.params.postId;
+  Post.findById(postId).then(post => {
+    if (!post) {
+      // post not found
+      const error = new Error('Could not find the post');
+      error.statusCode = 404;
+      throw error;
+    }
+    // post found
+    res.send({ post });
+  }).catch(error => {
+    next(error);
+  });
+}
+
 exports.createPost = (req, res, next) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {

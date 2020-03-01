@@ -7,6 +7,9 @@ import Input from '../../components/Form/Input/Input';
 import Paginator from '../../components/Paginator/Paginator';
 import Loader from '../../components/Loader/Loader';
 import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
+
+import { apiRoot } from '../../util/api';
+
 import './Feed.css';
 
 class Feed extends Component {
@@ -50,7 +53,7 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('URL')
+    fetch(`${apiRoot}/feed/posts`)
       .then(res => {
         if (res.status !== 200) {
           throw new Error('Failed to fetch posts.');
@@ -106,12 +109,22 @@ class Feed extends Component {
       editLoading: true
     });
     // Set up data (with image!)
-    let url = 'URL';
+    let url = `${apiRoot}/feed/post`;
+    let method = 'POST';
     if (this.state.editPost) {
       url = 'URL';
     }
 
-    fetch(url)
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: postData.title,
+        content: postData.content,
+      })
+    })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Creating or editing a post failed!');
@@ -240,7 +253,7 @@ class Feed extends Component {
                   key={post._id}
                   id={post._id}
                   author={post.creator.name}
-                  date={new Date(post.createdAt).toLocaleDateString('en-US')}
+                  date={new Date(post.createdAt).toLocaleDateString('en-IN')}
                   title={post.title}
                   image={post.imageUrl}
                   content={post.content}
