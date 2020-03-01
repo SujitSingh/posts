@@ -3,11 +3,26 @@ const Post = require('../models/post');
 const filesUtil = require('../../utils/files');
 
 exports.getPosts = (req, res, next) => {
-  Post.find().then(posts => {
-    res.send({ posts });
-  }).catch(error => {
-    next(error);
-  });
+  const currentPage = req.query.page && parseInt(req.query.page) || 1;
+  const perPage = 2;
+  let totalItems;
+
+  Post.find()
+    .countDocuments()
+    .then(count => {
+      totalItems = count;
+      // fetch post for particular range
+      return Post.find()
+                .skip((currentPage - 1) * perPage)
+                .limit(perPage);
+    }).then(posts => {
+      res.send({
+        posts,
+        totalItems
+      });
+    }).catch(error => {
+      next(error);
+    });
 }
 
 exports.getPost = (req, res, next) => {
