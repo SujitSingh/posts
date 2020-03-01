@@ -34,13 +34,21 @@ exports.createPost = (req, res, next) => {
     customError.errors = error.array();
     throw customError;
   }
+  if (!req.file) {
+    // no image provided
+    const customError = new Error('Image not provided');
+    error.customError = 422;
+    throw customError;
+  }
 
   const title = req.body.title;
   const content = req.body.content;
+  const imagePath = '/images/' + req.file.filename;
+
   const post = new Post({
     title,
     content,
-    imageUrl: '/images/book-img.jpeg',
+    imageUrl: imagePath,
     creator: {
       name: 'Sujit'
     }
