@@ -12,6 +12,7 @@ const app = express();
 const PORT = 8082;
 
 const feetRoutes = require('./apis/routes/feed');
+const authRoutes = require('./apis/routes/auth');
 
 app.use(cors()); // enable CORS
 app.use(express.json()); // body parsing
@@ -38,11 +39,13 @@ app.use(multer({ storage: multerFileStorage, fileFilter: multerFileFilter}).sing
 
 // using routes
 app.use('/feed', feetRoutes);
+app.use('/auth', authRoutes);
 
 // default error handler
 app.use((error, req, res, next) => {
   const message = error.message;
-  res.status(error.statusCode || 500).send({ ...error, message });
+  const data = error.data;
+  res.status(error.statusCode || 500).send({ ...error, message, data });
 });
 
 mongoose.connect(appConfig.mongoDBPath, {useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true})
