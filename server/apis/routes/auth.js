@@ -1,6 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
+const validationSrc = require('../services/request-validator');
 
 const authCtrls = require('../controllers/auth');
 
@@ -17,6 +18,7 @@ router.post('/signup',
       .trim()
       .isLength({ min: 5 })
   ],
+  validationSrc.checkValidationsErrors,
   authCtrls.signup
 );
 
@@ -25,10 +27,11 @@ router.post('/login',
     body('email', 'Email is invalid')
       .trim()
       .isEmail(),
-    body('password', 'Password should be mimn 5 chars long')
+    body('password', 'Password should be min 5 chars long')
       .trim()
       .isLength({ min: 5 })
   ],
+  validationSrc.checkValidationsErrors,
   authCtrls.login
 );
 

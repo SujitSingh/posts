@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 
 const router = express.Router();
+const validationSrc = require('../services/request-validator');
 
 const feedCtrls = require('../controllers/feed');
 
@@ -17,6 +18,7 @@ router.post('/post',
       .trim()
       .isLength({ min: 5 })
   ],
+  validationSrc.checkValidationsErrors,
   feedCtrls.createPost
 );
 
@@ -29,6 +31,7 @@ router.put('/post/:postId',
       .trim()
       .isLength({ min: 5 })
   ],
+  validationSrc.checkValidationsErrors,
   feedCtrls.updatePost
 );
 

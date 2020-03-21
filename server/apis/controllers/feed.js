@@ -42,14 +42,6 @@ exports.getPost = (req, res, next) => {
 }
 
 exports.createPost = (req, res, next) => {
-  const error = validationResult(req);
-  if (!error.isEmpty()) {
-    // validation failed
-    const customError = new Error('Failed to create post due to data validation failure');
-    customError.statusCode = 422;
-    customError.errors = error.array();
-    throw customError;
-  }
   if (!req.file) {
     // no image provided
     const customError = new Error('Image not provided');
@@ -80,15 +72,6 @@ exports.createPost = (req, res, next) => {
 }
 
 exports.updatePost = (req, res, next) => {
-  const error = validationResult(req);
-  if (!error.isEmpty()) {
-    // validation failed
-    const customError = new Error('Failed to create post due to data validation failure');
-    customError.statusCode = 422;
-    customError.errors = error.array();
-    throw customError;
-  }
-
   const postId = req.params.postId;
   const title = req.body.title;
   const content = req.body.content;
