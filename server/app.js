@@ -13,6 +13,7 @@ const PORT = 8082;
 
 const feetRoutes = require('./apis/routes/feed');
 const authRoutes = require('./apis/routes/auth');
+const userRoutes = require('./apis/routes/user');
 
 app.use(cors()); // enable CORS
 app.use(express.json()); // body parsing
@@ -40,6 +41,7 @@ app.use(multer({ storage: multerFileStorage, fileFilter: multerFileFilter}).sing
 // using routes
 app.use('/feed', feetRoutes);
 app.use('/auth', authRoutes);
+app.use('/user', userRoutes);
 
 // default error handler
 app.use((error, req, res, next) => {
