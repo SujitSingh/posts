@@ -6,10 +6,11 @@ const validationSrc = require('../services/request-validator');
 
 const feedCtrls = require('../controllers/feed');
 
-router.get('/posts', feedCtrls.getPosts);
-router.get('/post/:postId', feedCtrls.getPost);
+router.get('/posts', validationSrc.validateAuthToken, feedCtrls.getPosts);
+router.get('/post/:postId', validationSrc.validateAuthToken, feedCtrls.getPost);
 
-router.post('/post', 
+router.post('/post',
+  validationSrc.validateAuthToken,
   [
     body('title')
       .trim()
@@ -22,7 +23,8 @@ router.post('/post',
   feedCtrls.createPost
 );
 
-router.put('/post/:postId', 
+router.put('/post/:postId',
+  validationSrc.validateAuthToken,
   [
     body('title')
       .trim()
@@ -35,6 +37,6 @@ router.put('/post/:postId',
   feedCtrls.updatePost
 );
 
-router.delete('/post/:postId', feedCtrls.deletePost);
+router.delete('/post/:postId', validationSrc.validateAuthToken, feedCtrls.deletePost);
 
 module.exports = router;

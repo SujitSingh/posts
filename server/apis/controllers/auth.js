@@ -61,7 +61,7 @@ exports.login = (req, res, next) => {
         email: userObj.email,
         userId: userObj._id.toString(),
       },
-      'jwt-secret-token-string',
+      appConfig.tokenSecret,
       { expiresIn: '1d' }
     );
     res.send({
