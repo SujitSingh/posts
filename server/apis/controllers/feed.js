@@ -2,32 +2,27 @@ const Post = require('../models/post');
 const User = require('../models/user');
 const filesUtil = require('../../utils/files');
 
-exports.getPosts = (req, res, next) => {
+exports.getPosts = async (req, res, next) => {
   const currentPage = req.query.page && parseInt(req.query.page) || 1;
   const perPage = 2;
-  let totalItems;
 
-  Post.find()
-    .countDocuments()
-    .then(count => {
-      totalItems = count;
-      // fetch post for particular range
-      return Post.find()
-                .skip((currentPage - 1) * perPage)
-                .limit(perPage);
-    }).then(posts => {
-      res.send({
-        posts,
-        totalItems
-      });
-    }).catch(error => {
-      next(error);
-    });
+  try {
+    const totalItems = await Post.find().countDocuments();
+    // fetch post for particular range
+    const posts = await Post.find()
+                            .skip((currentPage - 1) * perPage)
+                            .limit(perPage);
+
+    res.send({ posts, totalItems });
+  } catch(error) {
+    next(error);
+  }
 }
 
-exports.getPost = (req, res, next) => {
+exports.getPost = async (req, res, next) => {
   const postId = req.params.postId;
-  Post.findById(postId).then(post => {
+  try {
+    const post = await Post.findById(postId);
     if (!post) {
       // post not found
       const error = new Error('Could not find the post');
@@ -36,12 +31,12 @@ exports.getPost = (req, res, next) => {
     }
     // post found
     res.send({ post });
-  }).catch(error => {
+  } catch(error) {
     next(error);
-  });
+  }
 }
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
   if (!req.file) {
     // no image provided
     const customError = new Error('Image not provided');
@@ -59,30 +54,27 @@ exports.createPost = (req, res, next) => {
     imageUrl: imagePath,
     creator: req.userId
   });
-  post.save().then(async (result) => {
-    try {
-      const user = await User.findById(req.userId);
-      creator = user;
-      user.posts.push(post);
-      await user.save();
-      // send response
-      res.send({
-        message: 'Post created successfully',
-        post: post,
-        creator: {
-          _id: creator._id.toString(),
-          name: creator.name
-        }
-      });
-    } catch(error) {
-      next(error);
-    }
-  }).catch(error => {
+  try {
+    await post.save();
+    const user = await User.findById(req.userId);
+    creator = user;
+    user.posts.push(post);
+    await user.save();
+    // send response
+    res.send({
+      message: 'Post created successfully',
+      post: post,
+      creator: {
+        _id: creator._id.toString(),
+        name: creator.name
+      }
+    });
+  } catch(error) {
     next(error);
-  });
+  }
 }
 
-exports.updatePost = (req, res, next) => {
+exports.updatePost = async (req, res, next) => {
   const postId = req.params.postId;
   const title = req.body.title;
   const content = req.body.content;
@@ -100,7 +92,8 @@ exports.updatePost = (req, res, next) => {
     return next(error);
   }
 
-  Post.findById(postId).then(post => {
+  try {
+    const post = await Post.findById(postId);
     if (!post) {
       const error = new Error('Post not available');
       error.statusCode = 404;
@@ -120,19 +113,18 @@ exports.updatePost = (req, res, next) => {
     post.title = title;
     post.content = content;
     post.imageUrl = imagePath;
-    return post.save();
-  })
-    .then(updatedPost => {
-      res.send(updatedPost);
-    }).catch(error => {
-      next(error);
-    });
+    const updatedPost = await post.save();
+    res.send(updatedPost);
+  } catch(error) {
+    next(error);
+  }
 }
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
   const postId = req.params.postId;
   const currentUserId = req.userId;
-  Post.findById(postId).then(post => {
+  try {
+    const post = await Post.findById(postId);
     if (!post) {
       const error = new Error('Post not available');
       error.statusCode = 404;
@@ -147,20 +139,15 @@ exports.deletePost = (req, res, next) => {
     // delete image
     filesUtil.deleteFile('public', post.imageUrl);
     // deleted post
-    return Post.findByIdAndRemove(postId);
-  }).then(async deleted => {
+    const deleted = await Post.findByIdAndRemove(postId);
     // remove the delted post reference from User's object
-    try {
-      const user = await User.findById(currentUserId);
-      user.posts.pull(postId);
-      await user.save();
-      res.send({
-        message: 'Post deleted'
-      });
-    } catch(error) {
-      next(error);
-    }
-  }).catch(error => {
+    const user = await User.findById(currentUserId);
+    user.posts.pull(postId);
+    await user.save();
+    res.send({
+      message: 'Post deleted'
+    });
+  } catch (error) {
     next(error);
-  });
+  }
 }
