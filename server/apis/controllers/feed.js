@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const Post = require('../models/post');
+const User = require('../models/user');
 const filesUtil = require('../../utils/files');
 
 exports.getPosts = (req, res, next) => {
@@ -57,15 +58,26 @@ exports.createPost = (req, res, next) => {
     title,
     content,
     imageUrl: imagePath,
-    creator: {
-      name: 'Sujit'
-    }
+    creator: req.userId
   });
-  post.save().then(result => {
-    res.send({
-      message: 'Post created successfully',
-      post: result
-    });
+  post.save().then(async (result) => {
+    try {
+      const user = await User.findById(req.userId);
+      creator = user;
+      user.posts.push(post);
+      await user.save();
+      // send response
+      res.send({
+        message: 'Post created successfully',
+        post: post,
+        creator: {
+          _id: creator._id.toString(),
+          name: creator.name
+        }
+      });
+    } catch(error) {
+      next(error);
+    }
   }).catch(error => {
     next(error);
   });
