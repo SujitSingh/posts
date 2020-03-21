@@ -11,7 +11,11 @@ exports.getPosts = async (req, res, next) => {
     // fetch post for particular range
     const posts = await Post.find()
                             .skip((currentPage - 1) * perPage)
-                            .limit(perPage);
+                            .limit(perPage)
+                            .populate({
+                              path: 'creator',
+                              select: 'name email'
+                            });
 
     res.send({ posts, totalItems });
   } catch(error) {
@@ -22,7 +26,11 @@ exports.getPosts = async (req, res, next) => {
 exports.getPost = async (req, res, next) => {
   const postId = req.params.postId;
   try {
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId)
+                          .populate({
+                            path: 'creator',
+                            select: 'name email'
+                          });
     if (!post) {
       // post not found
       const error = new Error('Could not find the post');
