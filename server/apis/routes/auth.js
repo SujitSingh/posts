@@ -20,4 +20,16 @@ router.post('/signup',
   authCtrls.signup
 );
 
+router.post('/login',
+  [
+    body('email', 'Email is invalid')
+      .trim()
+      .isEmail(),
+    body('password', 'Password should be mimn 5 chars long')
+      .trim()
+      .isLength({ min: 5 })
+  ],
+  authCtrls.login
+);
+
 module.exports = router;

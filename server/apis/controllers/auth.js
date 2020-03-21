@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const appConfig = require('../../utils/config');
 
@@ -39,6 +40,43 @@ exports.signup = (req, res, next) => {
     res.send({
       message: 'User created',
       userId: created._id
+    });
+  }).catch(error => {
+    next(error);
+  });
+}
+
+exports.login = (req, res, next) => {
+  const email = req.body.email,
+        password = req.body.password;
+  let userObj;
+  User.findOne({ email: email }).then(user => {
+    if (!user) {
+      const error = new Error(`User not found`);
+      error.statusCode = 401;
+      throw error;
+    }
+    userObj = user;
+    // compare password hash
+    return bcrypt.compare(password, user.password);
+  }).then(result => {
+    if (!result) {
+      const error = new Error(`User credentials were incorrect`);
+      error.statusCode = 401;
+      throw error;
+    }
+    // generate JWT token
+    const token = jwt.sign(
+      {
+        email: userObj.email,
+        userId: userObj._id.toString(),
+      },
+      'jwt-secret-token-string',
+      { expiresIn: '1d' }
+    );
+    res.send({
+      token: token,
+      userId: userObj._id.toString()
     });
   }).catch(error => {
     next(error);
