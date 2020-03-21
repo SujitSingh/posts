@@ -1,4 +1,3 @@
-const { validationResult } = require('express-validator');
 const Post = require('../models/post');
 const User = require('../models/user');
 const filesUtil = require('../../utils/files');
@@ -107,6 +106,12 @@ exports.updatePost = (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
+    if (post.creator.toString() !== req.userId) {
+      // different user tried deleting
+      const error = new Error('Not authorized to edit this post');
+      error.statusCode = 403;
+      throw error;
+    } 
     if (post.imageUrl !== imagePath) {
       // new image path has been provided, delete previous
       filesUtil.deleteFile('public' + post.imageUrl);
@@ -126,20 +131,35 @@ exports.updatePost = (req, res, next) => {
 
 exports.deletePost = (req, res, next) => {
   const postId = req.params.postId;
+  const currentUserId = req.userId;
   Post.findById(postId).then(post => {
     if (!post) {
       const error = new Error('Post not available');
       error.statusCode = 404;
       throw error;
     }
+    if (post.creator.toString() !== currentUserId) {
+      // different user tried deleting
+      const error = new Error('Not authorized to delete');
+      error.statusCode = 403;
+      throw error;
+    }
     // delete image
     filesUtil.deleteFile('public', post.imageUrl);
     // deleted post
     return Post.findByIdAndRemove(postId);
-  }).then(deleted => {
-    res.send({
-      message: 'Post deleted'
-    });
+  }).then(async deleted => {
+    // remove the delted post reference from User's object
+    try {
+      const user = await User.findById(currentUserId);
+      user.posts.pull(postId);
+      await user.save();
+      res.send({
+        message: 'Post deleted'
+      });
+    } catch(error) {
+      next(error);
+    }
   }).catch(error => {
     next(error);
   });
