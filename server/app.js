@@ -3,13 +3,11 @@ const path = require('path');
 const rootDir = require('./utils/paths');
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const multer = require('multer');
 
 const appConfig = require('./utils/config');
 
 const app = express();
-const PORT = 8082;
 
 const feetRoutes = require('./apis/routes/feed');
 const authRoutes = require('./apis/routes/auth');
@@ -50,12 +48,4 @@ app.use((error, req, res, next) => {
   res.status(error.statusCode || 500).send({ ...error, message, data });
 });
 
-mongoose.connect(appConfig.mongoDBPath, {useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true})
-  .then(success => {
-    console.log('DB connected');
-    app.listen(PORT, ()=> {
-      console.log(`Server running at http://localhost:${PORT}`);
-    });
-  }).catch(error => {
-    console.error('DB connection failed', error);
-  });
+module.exports = app;
