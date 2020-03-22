@@ -1,6 +1,7 @@
 const Post = require('../models/post');
 const User = require('../models/user');
 const filesUtil = require('../../utils/files');
+const socketIoUtil = require('../../utils/socket');
 
 exports.getPosts = async (req, res, next) => {
   const currentPage = req.query.page && parseInt(req.query.page) || 1;
@@ -65,16 +66,24 @@ exports.createPost = async (req, res, next) => {
   try {
     await post.save();
     const user = await User.findById(req.userId);
-    creator = user;
     user.posts.push(post);
     await user.save();
+    const creatorObj = {
+      _id: user._id.toString(),
+      name: user.name
+    };
     // send response
     res.send({
       message: 'Post created successfully',
       post: post,
-      creator: {
-        _id: creator._id.toString(),
-        name: creator.name
+      creator: creatorObj
+    });
+    // send Socket info about post creation
+    socketIoUtil.getIO().emit('posts', {
+      action: 'create',
+      post: {
+        ...post._doc,
+        creator: creatorObj
       }
     });
   } catch(error) {
