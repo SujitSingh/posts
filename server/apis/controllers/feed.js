@@ -16,7 +16,8 @@ exports.getPosts = async (req, res, next) => {
                             .populate({
                               path: 'creator',
                               select: 'name email'
-                            });
+                            })
+                            .sort({ createdAt: -1 }); // sort desc
 
     res.send({ posts, totalItems });
   } catch(error) {
@@ -78,7 +79,7 @@ exports.createPost = async (req, res, next) => {
       post: post,
       creator: creatorObj
     });
-    // send Socket info about post creation
+    // send Socket event about post creation
     socketIoUtil.getIO().emit('posts', {
       action: 'create',
       post: {
@@ -110,13 +111,17 @@ exports.updatePost = async (req, res, next) => {
   }
 
   try {
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId)
+                            .populate({
+                              path: 'creator',
+                              select: 'name email'
+                            });
     if (!post) {
       const error = new Error('Post not available');
       error.statusCode = 404;
       throw error;
     }
-    if (post.creator.toString() !== req.userId) {
+    if (post.creator._id.toString() !== req.userId) {
       // different user tried deleting
       const error = new Error('Not authorized to edit this post');
       error.statusCode = 403;
@@ -132,6 +137,11 @@ exports.updatePost = async (req, res, next) => {
     post.imageUrl = imagePath;
     const updatedPost = await post.save();
     res.send(updatedPost);
+    // send Socket event about post update
+    socketIoUtil.getIO().emit('posts', {
+      action: 'update',
+      post: updatedPost
+    });
   } catch(error) {
     next(error);
   }
@@ -163,6 +173,11 @@ exports.deletePost = async (req, res, next) => {
     await user.save();
     res.send({
       message: 'Post deleted'
+    });
+    // send Socket deven about post update
+    socketIoUtil.getIO().emit('posts', {
+      action: 'delete',
+      post: postId
     });
   } catch (error) {
     next(error);
