@@ -10,6 +10,10 @@ mongoose.connect(appConfig.mongoDBPath, {useNewUrlParser: true, useFindAndModify
   .then(success => {
     console.log('DB connected');
     server.listen(PORT, ()=> {
+      const io = require('socket.io')(server);
+      io.on('connection', socket => {
+        console.log('Client connected');
+      });
       console.log(`Server running at http://localhost:${PORT}`);
     });
   }).catch(error => {
