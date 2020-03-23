@@ -14,6 +14,9 @@ mongoose.connect(appConfig.mongoDBPath, {useNewUrlParser: true, useFindAndModify
       const io = socketIoUtil.init(server);
       io.on('connection', socket => {
         console.log('Client connected');
+        socket.on('disconnect', () => {
+          console.log('Client disconnected');
+        });
       });
       console.log(`Server running at http://localhost:${PORT}`);
     });
