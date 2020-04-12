@@ -7,8 +7,17 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
+      "name": "Launch Server",
       "program": "${workspaceFolder}/server/server.js",
+      "restart": true,
+      "runtimeExecutable": "nodemon",
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch GraphQL Server",
+      "program": "${workspaceFolder}/server-graphql/server.js",
       "restart": true,
       "runtimeExecutable": "nodemon",
       "console": "integratedTerminal"
