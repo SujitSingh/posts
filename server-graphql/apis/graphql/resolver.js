@@ -13,7 +13,11 @@ module.exports = {
       errors.push({ message: 'Password field should be min 5 characters long' });
     }
     if (errors.length) {
-      throw new Error(JSON.stringify(errors)); // send validation errors
+      // send validation errors
+      const error = new Error('Validation errors');
+      error.code = 422;
+      error.data = errors;
+      throw error;
     }
 
     const existingUser = await User.findOne({ email: userInput.email });

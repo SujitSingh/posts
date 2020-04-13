@@ -38,7 +38,18 @@ app.use(multer({ storage: multerFileStorage, fileFilter: multerFileFilter}).sing
 app.use('/graphql', graphqlExp({
   schema: graphqlSchema,
   rootValue: graphqlResolver,
-  graphiql: true
+  graphiql: true,
+  formatError: (error) => {
+    if (!error.originalError) {
+      return error; // code errors, send as it is
+    }
+    // send custom error
+    return {
+      message: error.message || 'Some error occured',
+      code: error.originalError.code || 500,
+      data: error.originalError.data
+    };
+  }
 }));
 
 // default error handler
