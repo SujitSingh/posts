@@ -22,21 +22,27 @@ module.exports = {
       throw error;
     }
 
-    const existingUser = await User.findOne({ email: userInput.email });
-    if (existingUser) {
-      throw new Error('User already exists');
+    try {
+      const existingUser = await User.findOne({ email: userInput.email });
+      if (existingUser) {
+        const error = new Error('User already exists');
+        error.code = 422;
+        throw error;
+      }
+      const hashedPw = await bcrypt.hash(userInput.password, 12);
+      const user = new User({
+        email: userInput.email,
+        name: userInput.name,
+        password: hashedPw
+      });
+      const createdUser = await user.save();
+      return {
+        _id: createdUser._id.toString(),
+        ...createdUser._doc
+      };
+    } catch(error) {
+      next(error);
     }
-    const hashedPw = await bcrypt.hash(userInput.password, 12);
-    const user = new User({
-      email: userInput.email,
-      name: userInput.name,
-      password: hashedPw
-    });
-    const createdUser = await user.save();
-    return {
-      _id: createdUser._id.toString(),
-      ...createdUser._doc
-    };
   },
   login: async ({ email, password }) => {
     const user = await User.findOne({ email });
@@ -46,26 +52,30 @@ module.exports = {
       error.status = 401;
       throw error;
     }
-    // compare password
-    const passEqual = await bcrypt.compare(password, user.password);
-    if (!passEqual) {
-      error = new Error('Wrong credentials');
-      error.status = 401;
-      throw error;
+    try {
+      // compare password
+      const passEqual = await bcrypt.compare(password, user.password);
+      if (!passEqual) {
+        error = new Error('Wrong credentials');
+        error.status = 401;
+        throw error;
+      }
+      // generate JWT token
+      const token = jwt.sign(
+        {
+          userId: user._id.toString(),
+          email: user.email
+        },
+        appConfig.tokenSecret,
+        { expiresIn: '1d' }
+      );
+      // send user details
+      return {
+        token,
+        userId: user._id.toString()
+      };
+    } catch(error) {
+      next(error);
     }
-    // generate JWT token
-    const token = jwt.sign(
-      {
-        userId: user._id.toString(),
-        email: user.email
-      },
-      appConfig.tokenSecret,
-      { expiresIn: '1d' }
-    );
-    // send user details
-    return {
-      token,
-      userId: user._id.toString()
-    };
   }
 }
