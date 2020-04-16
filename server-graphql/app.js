@@ -46,7 +46,7 @@ app.use('/graphql', graphqlExp({
     // send custom error
     return {
       message: error.message || 'Some error occured',
-      code: error.originalError.code || 500,
+      status: error.originalError.status || 500,
       data: error.originalError.data
     };
   }

@@ -1,5 +1,7 @@
 const bcrypt = require('bcrypt');
 const validator = require('validator');
+const jwt = require('jsonwebtoken');
+const appConfig = require('../../utils/config');
 
 const User = require('../models/user');
 
@@ -15,7 +17,7 @@ module.exports = {
     if (errors.length) {
       // send validation errors
       const error = new Error('Validation errors');
-      error.code = 422;
+      error.status = 422;
       error.data = errors;
       throw error;
     }
@@ -34,6 +36,36 @@ module.exports = {
     return {
       _id: createdUser._id.toString(),
       ...createdUser._doc
+    };
+  },
+  login: async ({ email, password }) => {
+    const user = await User.findOne({ email });
+    let error;
+    if (!user) {
+      error = new Error('User not found');
+      error.status = 401;
+      throw error;
+    }
+    // compare password
+    const passEqual = await bcrypt.compare(password, user.password);
+    if (!passEqual) {
+      error = new Error('Wrong credentials');
+      error.status = 401;
+      throw error;
+    }
+    // generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        email: user.email
+      },
+      appConfig.tokenSecret,
+      { expiresIn: '1d' }
+    );
+    // send user details
+    return {
+      token,
+      userId: user._id.toString()
     };
   }
 }
