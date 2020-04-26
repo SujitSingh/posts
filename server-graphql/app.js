@@ -9,6 +9,7 @@ const graphqlExp = require('express-graphql');
 const appConfig = require('./utils/config');
 const graphqlSchema = require('./apis/graphql/schema');
 const graphqlResolver = require('./apis/graphql/resolver');
+const authValidator = require('./apis/services/request-validator');
 
 const app = express();
 
@@ -35,6 +36,7 @@ const multerFileFilter = (req, file, cb) => {
 }
 app.use(multer({ storage: multerFileStorage, fileFilter: multerFileFilter}).single('image'));
 
+app.use(authValidator.validateAuthToken);
 app.use('/graphql', graphqlExp({
   schema: graphqlSchema,
   rootValue: graphqlResolver,
