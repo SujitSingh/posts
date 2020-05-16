@@ -79,6 +79,35 @@ module.exports = {
       next(error);
     }
   },
+  posts: async (args, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Authentication failed');
+      error.code = 401;
+      throw error;
+    }
+    try {
+      const totalPosts = await Post.find().countDocuments();
+      const posts = await Post.find()
+                              .sort({ createdAt: -1 })
+                              .populate('creator');
+      const postsArr = posts.map(post => {
+        return {
+          ...post._doc,
+          _id: post._id.toString(),
+          createdAt: post.createdAt.toString(),
+          updatedAt: post.updatedAt.toString()
+        };
+      });
+      return {
+        totalPosts, 
+        posts: postsArr
+      };
+    } catch(error) {
+      console.log(error);
+      return error;
+      // next(error);
+    }
+  },
   createPost: async ({ postInput }, req) => {
     if (!req.isAuth) {
       const error = new Error('Authentication failed');
@@ -97,28 +126,32 @@ module.exports = {
       throw error;
     }
 
-    const user = await User.findById(req.userId); // get user info
-    if (!user) {
-      const error = new Error('Invalid user');
-      error.code = 401;
-      throw error;
+    try {
+      const user = await User.findById(req.userId); // get user info
+      if (!user) {
+        const error = new Error('Invalid user');
+        error.code = 401;
+        throw error;
+      }
+      const post = new Post({
+        title: postInput.title,
+        content: postInput.content,
+        imageUrl: postInput.imageUrl,
+        creator: user
+      });
+      const createdPost = await post.save();
+      // add post info to user
+      user.posts.push(createdPost);
+      await user.save();
+      // post created
+      return {
+        _id: createdPost._id.toString(),
+        ...createdPost._doc,
+        createdAt: createdPost.createdAt.toISOString(),
+        updatedAt: createdPost.updatedAt.toISOString(),
+      };
+    } catch(error) {
+      next(error);
     }
-    const post = new Post({
-      title: postInput.title,
-      content: postInput.content,
-      imageUrl: postInput.imageUrl,
-      creator: user
-    });
-    const createdPost = await post.save();
-    // add post info to user
-    user.posts.push(createdPost);
-    await user.save();
-    // post created
-    return {
-      _id: createdPost._id.toString(),
-      ...createdPost._doc,
-      createdAt: createdPost.createdAt.toISOString(),
-      updatedAt: createdPost.updatedAt.toISOString(),
-    };
   }
 }
