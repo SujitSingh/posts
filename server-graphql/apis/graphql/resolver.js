@@ -110,6 +110,9 @@ module.exports = {
       creator: user
     });
     const createdPost = await post.save();
+    // add post info to user
+    user.posts.push(createdPost);
+    await user.save();
     // post created
     return {
       _id: createdPost._id.toString(),

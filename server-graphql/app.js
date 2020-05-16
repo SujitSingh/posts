@@ -41,7 +41,7 @@ app.use('/graphql', graphqlExp({
   schema: graphqlSchema,
   rootValue: graphqlResolver,
   graphiql: true,
-  formatError: (error) => {
+  customFormatErrorFn: (error) => {
     if (!error.originalError) {
       return error; // code errors, send as it is
     }
