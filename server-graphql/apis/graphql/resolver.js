@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const appConfig = require('../../utils/config');
+const filesUtil = require('../../utils/files');
 
 const User = require('../models/user');
 const Post = require('../models/post');
@@ -216,6 +217,34 @@ module.exports = {
         createdAt: updatedPost.createdAt.toISOString(),
         updatedAt: updatedPost.updatedAt.toISOString(),
       }
+    } catch (error) {
+      return error;
+    }
+  },
+  deletePost: async ({ id }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Authentication failed');
+      error.code = 401;
+      throw error;
+    }
+    try {
+      const post = await Post.findById(id).populate('creator');
+      if (!post || (post.creator._id.toString() !== req.userId)) {
+        const error = new Error('post not found');
+        error.code = 404;
+        throw error;
+      }
+      // delete associated image
+      filesUtil.deleteFile('public' + post.imageUrl);
+
+      await Post.findByIdAndRemove(id); // remove post
+      // remove from User's posts array too
+      const user = await User.findById(req.userId);
+      user.posts.pull(id);
+      await user.save();
+      return {
+        postDeleted: true
+      };
     } catch (error) {
       return error;
     }
