@@ -79,16 +79,20 @@ module.exports = {
       next(error);
     }
   },
-  posts: async (args, req) => {
+  posts: async ({ page }, req) => {
     if (!req.isAuth) {
       const error = new Error('Authentication failed');
       error.code = 401;
       throw error;
     }
+    page = page ? page : 1;
+    const perPage = 2;
     try {
       const totalPosts = await Post.find().countDocuments();
       const posts = await Post.find()
                               .sort({ createdAt: -1 })
+                              .skip((page - 1) * perPage)
+                              .limit(perPage)
                               .populate('creator');
       const postsArr = posts.map(post => {
         return {
