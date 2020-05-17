@@ -10,12 +10,15 @@ const appConfig = require('./utils/config');
 const graphqlSchema = require('./apis/graphql/schema');
 const graphqlResolver = require('./apis/graphql/resolver');
 const authValidator = require('./apis/services/request-validator');
+const filesUtil = require('./utils/files');
 
 const app = express();
 
 app.use(cors()); // enable CORS
 app.use(express.json()); // body parsing
 app.use(express.static(path.join(rootDir, 'public'))); // public folder
+
+app.use(authValidator.validateAuthToken);
 
 // multer file storage
 const multerFileStorage = multer.diskStorage({
@@ -36,7 +39,25 @@ const multerFileFilter = (req, file, cb) => {
 }
 app.use(multer({ storage: multerFileStorage, fileFilter: multerFileFilter}).single('image'));
 
-app.use(authValidator.validateAuthToken);
+app.put('/post-image', (req, res, next) => {
+  if (!req.isAuth) {
+    throw new Error('Not authenticated');
+  }
+  if (!req.file) {
+    return res.status(400).send({
+      message: 'No image file provided'
+    });
+  }
+  if (req.body.oldPath) {
+    // delete old image
+    filesUtil.deleteFile('public' + req.body.oldPath);
+  }
+  return res.status(201).send({
+    message: 'File stored',
+    filePath: '/images/' + req.file.filename
+  });
+});
+
 app.use('/graphql', graphqlExp({
   schema: graphqlSchema,
   rootValue: graphqlResolver,

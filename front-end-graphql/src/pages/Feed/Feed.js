@@ -152,43 +152,54 @@ class Feed extends Component {
     });
     // create form data
     const formData = new FormData();
-    formData.append('title', postData.title);
-    formData.append('content', postData.content);
     formData.append('image', postData.image);
+    if (this.state.editPost) {
+      formData.append('oldPath', this.state.editPost.imagePath);
+    }
 
-    let graphQuery = {
-      query: `
-        mutation {
-          createPost(postInput: { title: "${postData.title}", content: "${postData.content}", imageUrl: "some-image-path" }) {
-            _id
-            title
-            content
-            imageUrl
-            creator {
-              name
-            }
-            createdAt
-          }
-        }
-      `
-    };
-
-    fetch(`${apiRoot}/graphql`, {
-      method: 'POST',
-      body: JSON.stringify(graphQuery),
+    // save image
+    fetch(`${apiRoot}/post-image`, {
+      method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Token ${this.props.token}`
-      }
+      },
+      body: formData
+    }).then(res => {
+      return res.json();
+    }).then(res => {
+      const imageUrl = res.filePath
+      let graphQuery = {
+        query: `
+          mutation {
+            createPost(postInput: { title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}" }) {
+              _id
+              title
+              content
+              imageUrl
+              creator {
+                name
+              }
+              createdAt
+            }
+          }
+        `
+      };
+  
+      return fetch(`${apiRoot}/graphql`, {
+        method: 'POST',
+        body: JSON.stringify(graphQuery),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${this.props.token}`
+        }
+      });
     })
       .then(res => {
         return res.json();
       })
       .then(res => {
-        if (res.errors && res.errors[0].status === 422) {
-          throw new Error("Validation failed. Make sure the email address isn't used yet!");
-        } else if (res.errors) {
-          throw new Error('User login failed');
+        if (res.errors) {
+          throw new Error("Saving post failed");
         }
         const resData = res.data && res.data.createPost;
         const post = {
@@ -196,7 +207,8 @@ class Feed extends Component {
           title: resData.title,
           content: resData.content,
           creator: resData.creator,
-          createdAt: resData.createdAt
+          createdAt: resData.createdAt,
+          imagePath: resData.imageUrl
         };
         // add/edit posts to state
         this.setState(prevState => {
