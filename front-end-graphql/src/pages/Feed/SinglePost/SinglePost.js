@@ -15,26 +15,46 @@ class SinglePost extends Component {
     content: ''
   };
 
+  
   componentDidMount() {
     const postId = this.props.match.params.postId;
-    fetch(`${apiRoot}/feed/post/${postId}`, {
+    const graphQuery = {
+      query: `
+        {
+          post(id: "${postId}") {
+            title
+            content
+            imageUrl,
+            creator {
+              name
+            }
+            createdAt
+          }
+        }
+      `
+    };
+    fetch(`${apiRoot}/graphql`, {
+      method: 'POST',
       headers: {
-        Authorization: `Token ${this.props.token}`
-      }
+        Authorization: `Token ${this.props.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(graphQuery)
     })
       .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch status');
-        }
         return res.json();
-      })
-      .then(resData => {
+      }).then(res => {
+        if (res.errors) {
+          const message = res.errors[0] && res.errors[0].message; 
+          throw new Error(message || 'Failed to fetch details of post');
+        }
+        const resData = res.data && res.data.post;
         this.setState({
-          title: resData.post.title,
-          image: apiRoot + resData.post.imageUrl,
-          author: resData.post.creator.name,
-          date: new Date(resData.post.createdAt).toLocaleDateString('en-US'),
-          content: resData.post.content
+          title: resData.title,
+          image: apiRoot + resData.imageUrl,
+          author: resData.creator.name,
+          date: new Date(resData.createdAt).toLocaleDateString('en-US'),
+          content: resData.content
         });
       })
       .catch(err => {

@@ -42,7 +42,7 @@ module.exports = {
         ...createdUser._doc
       };
     } catch(error) {
-      next(error);
+      return error;
     }
   },
   login: async ({ email, password }) => {
@@ -76,7 +76,7 @@ module.exports = {
         userId: user._id.toString()
       };
     } catch(error) {
-      next(error);
+      return error;
     }
   },
   posts: async ({ page }, req) => {
@@ -98,8 +98,8 @@ module.exports = {
         return {
           ...post._doc,
           _id: post._id.toString(),
-          createdAt: post.createdAt.toString(),
-          updatedAt: post.updatedAt.toString()
+          createdAt: post.createdAt.toISOString(),
+          updatedAt: post.updatedAt.toISOString()
         };
       });
       return {
@@ -107,9 +107,30 @@ module.exports = {
         posts: postsArr
       };
     } catch(error) {
-      console.log(error);
       return error;
-      // next(error);
+    }
+  },
+  post: async ({ id }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Authentication failed');
+      error.code = 401;
+      throw error;
+    }
+    try {
+      const post = await Post.findById(id).populate('creator');
+      if (!post) {
+        const error = new Error('No post found');
+        error.code = 404;
+        throw error;
+      }
+      return {
+        ...post._doc,
+        _id: post._id.toString(),
+        createdAt: post.createdAt.toISOString(),
+        updatedAt: post.updatedAt.toISOString()
+      };
+    } catch (error) {
+      return error;
     }
   },
   createPost: async ({ postInput }, req) => {
@@ -155,7 +176,7 @@ module.exports = {
         updatedAt: createdPost.updatedAt.toISOString(),
       };
     } catch(error) {
-      next(error);
+      return error;
     }
   }
 }

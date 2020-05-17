@@ -88,7 +88,8 @@ class Feed extends Component {
       })
       .then(res => {
         if (res.errors) {
-          throw new Error('Failed to fetch posts.');
+          const message = res.errors[0] && res.errors[0].message; 
+          throw new Error(message || 'Failed to fetch posts.');
         }
         const resData = res.data && res.data.posts;
         this.setState({
