@@ -178,5 +178,46 @@ module.exports = {
     } catch(error) {
       return error;
     }
+  },
+  updatePost: async ({ id, postInput }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Authentication failed');
+      error.code = 401;
+      throw error;
+    }
+    const errors = [];
+    if (validator.isEmpty(postInput.title) || !validator.isLength(postInput.content, { min: 5 })) {
+      errors.push({ message: 'Title and contents are required' });
+    }
+    if (errors.length) {
+      // send validation errors
+      const error = new Error('Validation errors');
+      error.status = 422;
+      error.data = errors;
+      throw error;
+    }
+    try {
+      const post = await Post.findById(id).populate('creator');
+      if (!post || (post.creator._id.toString() !== req.userId)) {
+        const error = new Error('Post not found');
+        error.code = 404;
+        throw error;
+      }
+      post.title = postInput.title;
+      post.content = postInput.content;
+      if (postInput.imageUrl !== 'undefined') {
+        // new image provided
+        post.imageUrl = postInput.imageUrl;
+      }
+      const updatedPost = await post.save();
+      return {
+        ...updatedPost._doc,
+        _id: updatedPost._id.toString(),
+        createdAt: updatedPost.createdAt.toISOString(),
+        updatedAt: updatedPost.updatedAt.toISOString(),
+      }
+    } catch (error) {
+      return error;
+    }
   }
 }

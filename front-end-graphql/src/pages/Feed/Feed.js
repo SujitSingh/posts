@@ -185,6 +185,25 @@ class Feed extends Component {
           }
         `
       };
+      if (this.state.editPost) {
+        const postId = this.state.editPost._id;
+        graphQuery = {
+          query: `
+            mutation {
+              updatePost(id: "${postId}", postInput: { title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}" }) {
+                _id
+                title
+                content
+                imageUrl
+                creator {
+                  name
+                }
+                createdAt
+              }
+            }
+          `
+        };
+      }
   
       return fetch(`${apiRoot}/graphql`, {
         method: 'POST',
@@ -200,9 +219,10 @@ class Feed extends Component {
       })
       .then(res => {
         if (res.errors) {
-          throw new Error("Saving post failed");
+          const message = res.errors[0] && res.errors[0].message;
+          throw new Error(message || 'Saving post failed');
         }
-        const resData = res.data && res.data.createPost;
+        const resData = res.data && (res.data.createPost || res.data.updatePost);
         const post = {
           _id: resData._id,
           title: resData.title,
