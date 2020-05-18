@@ -25,18 +25,32 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    fetch(`${apiRoot}/user/status`, {
+    const graphQuery = {
+      query: `
+        {
+          user {
+            status
+          }
+        }
+      `
+    };
+    fetch(`${apiRoot}/graphql`, {
+      method: 'POST',
       headers: {
-        Authorization: `Token ${this.props.token}`
-      }
+        Authorization: `Token ${this.props.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(graphQuery)
     })
       .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch user status.');
-        }
         return res.json();
       })
-      .then(resData => {
+      .then(res => {
+        if (res.errors) {
+          const message = res.errors[0] && res.errors[0].message; 
+          throw new Error(message || 'Failed to fetch user details.');
+        }
+        const resData = res.data && res.data.user;
         this.setState({ status: resData.status });
       })
       .catch(this.catchError);
@@ -108,22 +122,35 @@ class Feed extends Component {
 
   statusUpdateHandler = event => {
     event.preventDefault();
-    fetch(`${apiRoot}/user/status`, {
+    const graphQuery = {
+      query: `
+        mutation {
+          updateUserStatus(status: "${this.state.status}") {
+            status
+          }
+        }
+      `
+    };
+    fetch(`${apiRoot}/graphql`, {
       method: 'POST',
       headers: {
         Authorization: `Token ${this.props.token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ status: this.state.status })
+      body: JSON.stringify(graphQuery)
     })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error("Can't update status!");
-        }
         return res.json();
       })
-      .then(resData => {
-        console.log(resData);
+      .then(res => {
+        if (res.errors) {
+          const message = res.errors[0] && res.errors[0].message; 
+          throw new Error(message || 'Could not update status');
+        }
+        const resData = res.data && res.data.updateUserStatus;
+        this.setState({
+          status: resData.status
+        });
       })
       .catch(this.catchError);
   };

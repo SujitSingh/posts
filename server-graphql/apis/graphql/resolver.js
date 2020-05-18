@@ -230,7 +230,7 @@ module.exports = {
     try {
       const post = await Post.findById(id).populate('creator');
       if (!post || (post.creator._id.toString() !== req.userId)) {
-        const error = new Error('post not found');
+        const error = new Error('Post not found');
         error.code = 404;
         throw error;
       }
@@ -244,6 +244,50 @@ module.exports = {
       await user.save();
       return {
         postDeleted: true
+      };
+    } catch (error) {
+      return error;
+    }
+  },
+  user: async (args, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Authentication failed');
+      error.code = 401;
+      throw error;
+    }
+    try {
+      const user = await User.findById(req.userId);
+      if (!user || (user._id.toString() !== req.userId)) {
+        const error = new Error('User not found');
+        error.code = 404;
+        throw error;
+      }
+      return {
+        ...user._doc,
+        _id: user._id.toString(),
+      };
+    } catch (error) {
+      return error;
+    }
+  },
+  updateUserStatus: async ({ status }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Authentication failed');
+      error.code = 401;
+      throw error;
+    }
+    try {
+      const user = await User.findById(req.userId);
+      if (!user || (user._id.toString() !== req.userId)) {
+        const error = new Error('User not found');
+        error.code = 404;
+        throw error;
+      }
+      user.status = status; // update new status
+      await user.save();
+      return {
+        ...user._doc,
+        _id: user._id.toString()
       };
     } catch (error) {
       return error;
