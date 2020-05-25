@@ -29,6 +29,10 @@ module.exports = buildSchema(`
     totalPosts: Int!
   }
 
+  type DeletedPostResponse {
+    postDeleted: Boolean!
+  }
+
   input UserInputData {
     email: String!
     name: String!
@@ -45,7 +49,7 @@ module.exports = buildSchema(`
     createUser(userInput: UserInputData): User!
     createPost(postInput: CreatePostData): Post!
     updatePost(id: ID!, postInput: CreatePostData!): Post!
-    deletePost(id: ID!): Boolean!
+    deletePost(id: ID!): DeletedPostResponse!
     updateUserStatus(status: String!): User!
   }
   
