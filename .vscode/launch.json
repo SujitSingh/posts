@@ -11,7 +11,12 @@
       "program": "${workspaceFolder}/server/server.js",
       "restart": true,
       "runtimeExecutable": "nodemon",
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "${workspaceFolder}/front-end/*",
+        "${workspaceFolder}/front-end-graphql/*",
+      ]
     },
     {
       "type": "node",
@@ -20,7 +25,12 @@
       "program": "${workspaceFolder}/server-graphql/server.js",
       "restart": true,
       "runtimeExecutable": "nodemon",
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "${workspaceFolder}/front-end/*",
+        "${workspaceFolder}/front-end-graphql/*",
+      ]
     }
   ]
 }
